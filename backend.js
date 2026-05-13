@@ -79,6 +79,8 @@ function createbox(x, y, width, height, color, meta, boxId) {
         el.remove();
       });
       moveDown();
+      moveRight();
+      // createBoxesIfEmpty();
     }
   });
   document.body.appendChild(box);
@@ -93,7 +95,7 @@ function onClickRemoveElement(x, y, color) {
     return;
   }
   set.add(boxId);
-  console.log(set);
+  // console.log(set);
 
   const rightSide = x + 1;
   if (rightSide < col) {
@@ -128,13 +130,14 @@ function moveDown() {
       } else {
         let id = document.getElementById("" + i + j);
         // id.style.top = parseInt(id.style.top) + counter * boxHeight + "px";
+        overLay();
         const animation = id.animate(
           [
             { top: id.style.top },
             { top: parseInt(id.style.top) + counter * boxHeight + "px" },
           ],
           {
-            duration: 2000,
+            duration: 300,
             easing: "ease-in-out",
             fill: "both",
           },
@@ -142,6 +145,7 @@ function moveDown() {
         id.style.top = parseInt(id.style.top) + counter * boxHeight + "px";
         animation.onfinish = () => {
           animation.cancel();
+          removeOverlay();
         };
         id.id = "" + i + (j + counter);
         id.textContent = "" + i + (j + counter);
@@ -150,35 +154,66 @@ function moveDown() {
           y: j + counter,
           color: id.style.backgroundColor,
         };
-          id.addEventListener("click", () => {
-            pop();
-            onClickRemoveElement(newmeta.x, newmeta.y, newmeta.color);
-            if (set.size > 2) {
-              set.forEach((boxId) => {
-                let el = document.getElementById(boxId);
-                el.remove();
-              });
-              moveDown();
-            }
-          });
-        
+        id.addEventListener("click", () => {
+          pop();
+          onClickRemoveElement(newmeta.x, newmeta.y, newmeta.color);
+          if (set.size > 2) {
+            set.forEach((boxId) => {
+              let el = document.getElementById(boxId);
+              el.remove();
+            });
+            moveDown();
+            // createBoxesIfEmpty();
+          }
+        });
+
         console.log(newmeta);
       }
     }
     counter = 0;
   }
 }
-// function moveDownAnimation(idName, pos1, pos2) {
-//   let id = document.getElementById(idName);
-// id.style.top = parseInt(id.style.top) + counter * boxHeight + "px";
-//   const animation = id.animate([{ top: pos1 }, { top: pos2 }], {
-//     duration: 1000,
-//     easing: "ease-in-out",
-//     fill: "both",
-//   });
-//   animation.onfinish = () => {
-//     animation.commitStyles();
-//     animation.cancel();
-//   };
-// await animation.finished;
+// function createBoxesIfEmpty() {
+// for (let i = 0; i < row; i++) {
+//     for (let j = 0; j < col; j++) {
+//       let i=0;
+//       let posX = startX + startGapX / 2 + j * boxWidth;
+//       let posY = startY + startGapY / 2 + i * boxHeight;
+//       color = colors[getRandomInt()];
+//       let boxId = "" + j + i;
+//       console.log(boxId);
+//       console.log(i);
+//       console.log(j);
+//       meta = {
+//         x: j,
+//         y: i,
+//         color: color,
+//       };
+//       console.log(meta);
+//       if (document.getElementById(boxId) == null) {
+//         createbox(posX, posY, boxWidth, boxHeight, color, meta, boxId);
+//         moveDown();
+//       }
+//     }
 // }
+// }
+function overLay() {
+  for (let i = 0; i < row; i++) {
+    for (let j = 0; j < col; j++) {
+      let id = document.getElementById("" + i + j);
+      if (id) {
+        id.style.pointerEvents = "none";
+      }
+    }
+  }
+}
+function removeOverlay() {
+  for (let i = 0; i < row; i++) {
+    for (let j = 0; j < col; j++) {
+      let id = document.getElementById("" + i + j);
+      if (id) {
+        id.style.pointerEvents = "auto";
+      }
+    }
+  }
+}

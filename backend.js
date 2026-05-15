@@ -12,6 +12,7 @@ let boxWidth = playableWidth / col;
 let boxHeight = playableHeight / row;
 let startX = totalWidth * startXPercent;
 let startY = totalHeight * startYPercent;
+let center = row % 2 == 0 ? row / 2 : (row + 1) / 2;
 console.log("Total width " + totalWidth);
 console.log("Total height " + totalHeight);
 console.log("Playable width " + playableWidth);
@@ -79,8 +80,7 @@ function createbox(x, y, width, height, color, meta, boxId) {
         el.remove();
       });
       moveDown();
-      moveRight();
-      // createBoxesIfEmpty();
+      moveCenter();
     }
   });
   document.body.appendChild(box);
@@ -95,7 +95,6 @@ function onClickRemoveElement(x, y, color) {
     return;
   }
   set.add(boxId);
-  // console.log(set);
 
   const rightSide = x + 1;
   if (rightSide < col) {
@@ -118,18 +117,15 @@ function onClickRemoveElement(x, y, color) {
 let set = new Set();
 function pop() {
   set.clear();
-  console.log(set);
 }
 let counter = 0;
 function moveDown() {
   for (let i = 0; i < row; i++) {
     for (let j = col - 1; j >= 0; j--) {
       if (document.getElementById("" + i + j) == null) {
-        // console.log("remove" + i + j);
         counter++;
       } else {
         let id = document.getElementById("" + i + j);
-        // id.style.top = parseInt(id.style.top) + counter * boxHeight + "px";
         overLay();
         const animation = id.animate(
           [
@@ -149,7 +145,7 @@ function moveDown() {
         };
         id.id = "" + i + (j + counter);
         id.textContent = "" + i + (j + counter);
-        let newmeta = {
+        const newmeta = {
           x: i,
           y: j + counter,
           color: id.style.backgroundColor,
@@ -157,17 +153,15 @@ function moveDown() {
         id.addEventListener("click", () => {
           pop();
           onClickRemoveElement(newmeta.x, newmeta.y, newmeta.color);
-          if (set.size > 2) {
+          if (set.size > 0) {
             set.forEach((boxId) => {
               let el = document.getElementById(boxId);
               el.remove();
             });
             moveDown();
-            // createBoxesIfEmpty();
+            moveCenter();
           }
         });
-
-        console.log(newmeta);
       }
     }
     counter = 0;

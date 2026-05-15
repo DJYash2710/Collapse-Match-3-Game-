@@ -13,29 +13,17 @@ let boxHeight = playableHeight / row;
 let startX = totalWidth * startXPercent;
 let startY = totalHeight * startYPercent;
 let center = row % 2 == 0 ? row / 2 : (row + 1) / 2;
-console.log("Total width " + totalWidth);
-console.log("Total height " + totalHeight);
-console.log("Playable width " + playableWidth);
-console.log("playable height " + playableHeight);
-console.log("gap from left " + startX);
-console.log("gap from top " + startY);
-console.log("box width " + boxWidth);
-console.log("box height " + boxHeight);
-let meta = {};
-let startGapX = 0;
-let startGapY = 0;
+let meta = {}; //used to store the x and y coordinates and color of the box to be used in the click event listener
+let startGapX = 0; //used to calculate the gap left after creating and shaping the boxes to center them in the playable area
+let startGapY = 0; //used to calculate the gap left after creating and shaping the boxes to center them in the playable area
 if (boxWidth > boxHeight) {
   boxWidth = boxHeight;
   startGapX = playableWidth - boxWidth * row;
-  console.log("width left" + startGapX);
 } else if (boxHeight > boxWidth) {
   boxHeight = boxWidth;
   startGapY = playableHeight - boxHeight * col;
-  console.log("height left" + startGapY);
 }
-console.log("box width " + boxWidth);
-console.log("box height " + boxHeight);
-createbox(startX, startY, playableWidth, playableHeight, "#000000", meta);
+createBox(startX, startY, playableWidth, playableHeight, "#000000", meta);
 function getRandomInt() {
   min = 0;
   max = 3;
@@ -53,10 +41,10 @@ for (let i = 0; i < row; i++) {
       y: i,
       color: color,
     };
-    createbox(posX, posY, boxWidth, boxHeight, color, meta, boxId);
+    createBox(posX, posY, boxWidth, boxHeight, color, meta, boxId);
   }
 }
-function createbox(x, y, width, height, color, meta, boxId) {
+function createBox(x, y, width, height, color, meta, boxId) {
   const box = document.createElement("div");
   box.id = boxId;
   box.style.width = width + "px";
@@ -66,22 +54,15 @@ function createbox(x, y, width, height, color, meta, boxId) {
   box.style.position = "absolute";
   box.style.left = x + "px";
   box.style.top = y + "px";
-  box.textContent = "" + meta.x + meta.y;
+  // box.textContent = "" + meta.x + meta.y;
   box.addEventListener("click", () => {
-    pop();
-    onClickRemoveElement(meta.x, meta.y, meta.color);
-    if (set.size > 1) {
-      set.forEach((boxId) => {
-        let el = document.getElementById(boxId);
-        el.remove();
-      });
-      moveDown();
-      moveCenter();
-    }
+    clearSelectionOfBoxes();
+    selectBoxes(meta.x, meta.y, meta.color);
+    removeSelectedBoxes();
   });
   document.body.appendChild(box);
 }
-function onClickRemoveElement(x, y, color) {
+function selectBoxes(x, y, color) {
   let boxId = "" + x + y;
   let id = document.getElementById(boxId);
   if (!id) return;
@@ -93,35 +74,35 @@ function onClickRemoveElement(x, y, color) {
 
   const rightSide = x + 1;
   if (rightSide < col) {
-    onClickRemoveElement(rightSide, y, color);
+    selectBoxes(rightSide, y, color);
   }
   const leftSide = x - 1;
   if (leftSide >= 0) {
-    onClickRemoveElement(leftSide, y, color);
+    selectBoxes(leftSide, y, color);
   }
   const bottomSide = y + 1;
   if (bottomSide < row) {
-    onClickRemoveElement(x, bottomSide, color);
+    selectBoxes(x, bottomSide, color);
   }
   const topSide = y - 1;
   if (topSide >= 0) {
-    onClickRemoveElement(x, topSide, color);
+    selectBoxes(x, topSide, color);
   }
 }
 
-let set = new Set();
-function pop() {
+let set = new Set(); //used to store the ids of the boxes that are to be removed on click of a box to avoid duplicate entries and to easily remove them using forEach loop
+function clearSelectionOfBoxes() {
   set.clear();
 }
-let counter = 0;
-function moveDown() {
+let counter = 0; // counter to keep track of how many boxes are removed in a column to calculate the distance the boxes above should fall down
+function gravity() {
   for (let i = 0; i < row; i++) {
     for (let j = col - 1; j >= 0; j--) {
       if (document.getElementById("" + i + j) == null) {
         counter++;
       } else {
         let id = document.getElementById("" + i + j);
-        overLay();
+        disableInput();
         const animation = id.animate(
           [
             { top: id.style.top },
@@ -136,26 +117,19 @@ function moveDown() {
         id.style.top = parseInt(id.style.top) + counter * boxHeight + "px";
         animation.onfinish = () => {
           animation.cancel();
-          removeOverlay();
+          enableInput();
         };
         id.id = "" + i + (j + counter);
-        id.textContent = "" + i + (j + counter);
+        // id.textContent = "" + i + (j + counter);
         const newmeta = {
           x: i,
           y: j + counter,
           color: id.style.backgroundColor,
         };
         id.addEventListener("click", () => {
-          pop();
-          onClickRemoveElement(newmeta.x, newmeta.y, newmeta.color);
-          if (set.size > 1) {
-            set.forEach((boxId) => {
-              let el = document.getElementById(boxId);
-              el.remove();
-            });
-            moveDown();
-            moveCenter();
-          }
+          clearSelectionOfBoxes();
+          selectBoxes(newmeta.x, newmeta.y, newmeta.color);
+          removeSelectedBoxes();
         });
       }
     }
@@ -163,7 +137,7 @@ function moveDown() {
   }
 }
 
-function overLay() {
+function disableInput() {
   for (let i = 0; i < row; i++) {
     for (let j = 0; j < col; j++) {
       let id = document.getElementById("" + i + j);
@@ -173,7 +147,7 @@ function overLay() {
     }
   }
 }
-function removeOverlay() {
+function enableInput() {
   for (let i = 0; i < row; i++) {
     for (let j = 0; j < col; j++) {
       let id = document.getElementById("" + i + j);
@@ -184,7 +158,7 @@ function removeOverlay() {
   }
 }
 
-function moveCenter() {
+function centerAlign() {
   let colsLeft = [];
   for (let i = 0; i < col; i++) {
     for (let j = 0; j < row; j++) {
@@ -198,7 +172,8 @@ function moveCenter() {
   if (colsLeft.length == col) return;
 
   let gridLeft = startX + startGapX / 2;
-  let newStartLeft = gridLeft + (col * boxWidth - colsLeft.length * boxWidth) / 2;
+  let newStartLeft =
+    gridLeft + (col * boxWidth - colsLeft.length * boxWidth) / 2;
 
   for (let k = 0; k < colsLeft.length; k++) {
     let oldCol = colsLeft[k];
@@ -209,32 +184,41 @@ function moveCenter() {
       let id = document.getElementById("" + oldCol + j);
       if (id == null) continue;
 
-      overLay();
+      disableInput();
       const animation = id.animate(
-        [
-          { left: id.style.left },
-          { left: newLeft + "px" },
-        ],
-        { duration: 300, easing: "ease-in-out", fill: "both" }
+        [{ left: id.style.left }, { left: newLeft + "px" }],
+        { duration: 300, easing: "ease-in-out", fill: "both" },
       );
       id.style.left = newLeft + "px";
-      animation.onfinish = () => { animation.cancel(); removeOverlay(); };
+      animation.onfinish = () => {
+        animation.cancel();
+        enableInput();
+      };
 
       id.id = "" + newCol + j;
-      id.textContent = "" + newCol + j;
+      // id.textContent = "" + newCol + j;
 
       const newmeta = { x: newCol, y: j, color: id.style.backgroundColor };
       id.addEventListener("click", () => {
-        pop();
-        onClickRemoveElement(newmeta.x, newmeta.y, newmeta.color);
-        if (set.size > 2) {
-          set.forEach((boxId) => {
-            document.getElementById(boxId)?.remove();
-          });
-          moveDown();
-          moveCenter();
-        }
+        clearSelectionOfBoxes();
+        selectBoxes(newmeta.x, newmeta.y, newmeta.color);
+        removeSelectedBoxes();
       });
     }
   }
+}
+function removeSelectedBoxes() {
+  if (set.size > 1) {
+    set.forEach((boxId) => {
+      document.getElementById(boxId)?.remove();
+    });
+    gravity();
+    centerAlign();
+    brickBlastSound();
+  }
+}
+const sound=new Audio("assets/audio/brick_break.mp3");
+function brickBlastSound() {
+  sound.currentTime = 0; 
+  sound.play();
 }

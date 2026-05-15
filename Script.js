@@ -48,15 +48,11 @@ for (let i = 0; i < row; i++) {
     let posY = startY + startGapY / 2 + i * boxHeight;
     color = colors[getRandomInt()];
     let boxId = "" + j + i;
-    console.log(boxId);
-    console.log(i);
-    console.log(j);
     meta = {
       x: j,
       y: i,
       color: color,
     };
-    console.log(meta);
     createbox(posX, posY, boxWidth, boxHeight, color, meta, boxId);
   }
 }
@@ -74,7 +70,7 @@ function createbox(x, y, width, height, color, meta, boxId) {
   box.addEventListener("click", () => {
     pop();
     onClickRemoveElement(meta.x, meta.y, meta.color);
-    if (set.size > 2) {
+    if (set.size > 1) {
       set.forEach((boxId) => {
         let el = document.getElementById(boxId);
         el.remove();
@@ -87,7 +83,6 @@ function createbox(x, y, width, height, color, meta, boxId) {
 }
 function onClickRemoveElement(x, y, color) {
   let boxId = "" + x + y;
-  console.log(boxId);
   let id = document.getElementById(boxId);
   if (!id) return;
   let check_color = id.style.backgroundColor;
@@ -153,7 +148,7 @@ function moveDown() {
         id.addEventListener("click", () => {
           pop();
           onClickRemoveElement(newmeta.x, newmeta.y, newmeta.color);
-          if (set.size > 0) {
+          if (set.size > 1) {
             set.forEach((boxId) => {
               let el = document.getElementById(boxId);
               el.remove();
@@ -167,30 +162,7 @@ function moveDown() {
     counter = 0;
   }
 }
-// function createBoxesIfEmpty() {
-// for (let i = 0; i < row; i++) {
-//     for (let j = 0; j < col; j++) {
-//       let i=0;
-//       let posX = startX + startGapX / 2 + j * boxWidth;
-//       let posY = startY + startGapY / 2 + i * boxHeight;
-//       color = colors[getRandomInt()];
-//       let boxId = "" + j + i;
-//       console.log(boxId);
-//       console.log(i);
-//       console.log(j);
-//       meta = {
-//         x: j,
-//         y: i,
-//         color: color,
-//       };
-//       console.log(meta);
-//       if (document.getElementById(boxId) == null) {
-//         createbox(posX, posY, boxWidth, boxHeight, color, meta, boxId);
-//         moveDown();
-//       }
-//     }
-// }
-// }
+
 function overLay() {
   for (let i = 0; i < row; i++) {
     for (let j = 0; j < col; j++) {
@@ -208,6 +180,61 @@ function removeOverlay() {
       if (id) {
         id.style.pointerEvents = "auto";
       }
+    }
+  }
+}
+
+function moveCenter() {
+  let colsLeft = [];
+  for (let i = 0; i < col; i++) {
+    for (let j = 0; j < row; j++) {
+      if (document.getElementById("" + i + j) != null) {
+        colsLeft.push(i);
+        break;
+      }
+    }
+  }
+  if (colsLeft.length == 0) return;
+  if (colsLeft.length == col) return;
+
+  let gridLeft = startX + startGapX / 2;
+  let newStartLeft = gridLeft + (col * boxWidth - colsLeft.length * boxWidth) / 2;
+
+  for (let k = 0; k < colsLeft.length; k++) {
+    let oldCol = colsLeft[k];
+    let newCol = k;
+    let newLeft = newStartLeft + k * boxWidth;
+
+    for (let j = 0; j < row; j++) {
+      let id = document.getElementById("" + oldCol + j);
+      if (id == null) continue;
+
+      overLay();
+      const animation = id.animate(
+        [
+          { left: id.style.left },
+          { left: newLeft + "px" },
+        ],
+        { duration: 300, easing: "ease-in-out", fill: "both" }
+      );
+      id.style.left = newLeft + "px";
+      animation.onfinish = () => { animation.cancel(); removeOverlay(); };
+
+      id.id = "" + newCol + j;
+      id.textContent = "" + newCol + j;
+
+      const newmeta = { x: newCol, y: j, color: id.style.backgroundColor };
+      id.addEventListener("click", () => {
+        pop();
+        onClickRemoveElement(newmeta.x, newmeta.y, newmeta.color);
+        if (set.size > 2) {
+          set.forEach((boxId) => {
+            document.getElementById(boxId)?.remove();
+          });
+          moveDown();
+          moveCenter();
+        }
+      });
     }
   }
 }

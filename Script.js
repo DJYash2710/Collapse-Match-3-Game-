@@ -1,7 +1,7 @@
-// const modal = document.getElementById("modeSelector");
-// document.addEventListener("DOMContentLoaded", () => {
-//   modal.showModal(); // Opens the dialog
-// });
+const modal = document.getElementById("modeSelector");
+document.addEventListener("DOMContentLoaded", () => {
+  modal.showModal(); // Opens the dialog
+});
 const standardModeBtn = document.getElementById("standard");
 const infiniteModeBtn = document.getElementById("infinite");
 standardModeBtn.addEventListener("click", () => {
@@ -9,7 +9,11 @@ standardModeBtn.addEventListener("click", () => {
 });
 infiniteModeBtn.addEventListener("click", () => {
   modal.close();
-});
+  setInterval(() => {
+    infiniteMode();
+  }, 300);
+}
+);
 let row = 10;
 let col = 10;
 let totalWidth = window.innerWidth;
@@ -36,9 +40,10 @@ if (boxWidth > boxHeight) {
   startGapY = playableHeight - boxHeight * col;
 }
 createBox(startX, startY, playableWidth, playableHeight, "#000000", meta);
+title();
 function getRandomInt() {
-  min = 0;
-  max = 3;
+  let min = 0;
+  let max = 3;
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 const colors = ["red", "yellow", "blue", "green"];
@@ -134,10 +139,10 @@ function gravity() {
           y: j + counter,
           color: id.style.backgroundColor,
         };
-        const capturedId = id; // ✅ capture before loop moves on
+        const capturedId = id;
         animation.onfinish = () => {
           animation.cancel();
-          capturedId.replaceWith(capturedId.cloneNode(true)); // ✅ strip old listeners after animation
+          capturedId.replaceWith(capturedId.cloneNode(true));
           let fresh = document.getElementById("" + newmeta.x + newmeta.y);
           fresh.addEventListener("click", () => {
             clearSelectionOfBoxes();
@@ -187,7 +192,8 @@ function centerAlign() {
   if (colsLeft.length == col) return;
 
   let gridLeft = startX + startGapX / 2;
-  let newStartLeft = gridLeft + (col * boxWidth - colsLeft.length * boxWidth) / 2;
+  let newStartLeft =
+    gridLeft + (col * boxWidth - colsLeft.length * boxWidth) / 2;
 
   for (let k = 0; k < colsLeft.length; k++) {
     let oldCol = colsLeft[k];
@@ -208,10 +214,10 @@ function centerAlign() {
       // id.textContent = "" + newCol + j;
 
       const newmeta = { x: newCol, y: j, color: id.style.backgroundColor };
-      const capturedId = id; // ✅ capture before loop moves on
+      const capturedId = id;
       animation.onfinish = () => {
         animation.cancel();
-        capturedId.replaceWith(capturedId.cloneNode(true)); // ✅ strip old listeners after animation
+        capturedId.replaceWith(capturedId.cloneNode(true));
         let fresh = document.getElementById("" + newmeta.x + newmeta.y);
         fresh.addEventListener("click", () => {
           clearSelectionOfBoxes();
@@ -239,4 +245,39 @@ function brickBlastSound() {
   sound.currentTime = 0;
   sound.play();
 }
-function infiniteMode() {}
+function infiniteMode() {
+  for (let i = 0; i < row; i++) {
+    let id = document.getElementById("" + i + "0");
+    if (id == null) {
+      let posX = startX + startGapX / 2 + i * boxWidth;
+      let posY = startY + startGapY / 2 + 0 * boxHeight;
+      color = colors[getRandomInt()];
+      let boxId = "" + i + 0;
+      const newMeta = {
+        x: i,
+        y: 0,
+        color: color,
+      };
+      createBox(posX, posY, boxWidth, boxHeight, color, newMeta, boxId);
+      gravity();
+    }
+  }
+}
+function title(){
+  const board=document.createElement("div");
+  board.style.position="absolute";
+  board.style.left=playableWidth/2+"px";
+  board.style.top=0;
+  board.style.fontSize="25px";
+  board.id="board";
+  board.style.fontWeight="bold"
+  board.textContent="Color Blast";
+  document.body.appendChild(board);
+}
+function scoreBoard(){
+  const scoreboard=document.createElement("div");
+  scoreboard.style.position="absolute";
+  scoreboard.style.left=playableWidth;
+  scoreboard.textContent="Score";
+  document.body.appendChild(scoreBoard);
+}

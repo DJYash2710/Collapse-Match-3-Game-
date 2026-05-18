@@ -113,50 +113,62 @@ function clearSelectionOfBoxes() {
 }
 let counter = 0;
 function gravity() {
-  for (let i = 0; i < row; i++) {
-    for (let j = col - 1; j >= 0; j--) {
-      if (document.getElementById("" + i + j) == null) {
+  let promises = [];
+
+  for (let i = 0; i < col; i++) {
+    let counter = 0; 
+    for (let j = row - 1; j >= 0; j--) {
+      let id = document.getElementById("" + i + j);
+      if (id == null) {
         counter++;
       } else {
-        let id = document.getElementById("" + i + j);
-        disableInput();
-        const animation = id.animate(
-          [
-            { top: id.style.top },
-            { top: parseInt(id.style.top) + counter * boxHeight + "px" },
-          ],
-          {
-            duration: 300,
-            easing: "ease-in-out",
-            fill: "both",
-          },
-        );
-        id.style.top = parseInt(id.style.top) + counter * boxHeight + "px";
-        id.id = "" + i + (j + counter);
-        // id.textContent = "" + i + (j + counter);
-        const newmeta = {
+        if (counter === 0) continue;
+
+        const fromTop = parseInt(id.style.top);
+        const toTop = fromTop + counter * boxHeight;
+        const newMeta = {
           x: i,
           y: j + counter,
           color: id.style.backgroundColor,
         };
+
+        // ✅ Rename ID immediately so no two boxes share an ID
+        id.id = "" + newMeta.x + newMeta.y;
+        id.style.top = toTop + "px";
+
+        disableInput();
+
         const capturedId = id;
-        animation.onfinish = () => {
-          animation.cancel();
-          capturedId.replaceWith(capturedId.cloneNode(true));
-          let fresh = document.getElementById("" + newmeta.x + newmeta.y);
-          fresh.addEventListener("click", () => {
-            clearSelectionOfBoxes();
-            selectBoxes(newmeta.x, newmeta.y, newmeta.color);
-            removeSelectedBoxes();
-          });
-          enableInput();
-        };
+        const promise = new Promise((resolve) => {
+          const animation = capturedId.animate(
+            [
+              { top: fromTop + "px" },
+              { top: toTop + "px" },
+            ],
+            { duration: 300, easing: "ease-in", fill: "both" }
+          );
+
+          animation.onfinish = () => {
+            animation.cancel();
+            capturedId.replaceWith(capturedId.cloneNode(true));
+            let fresh = document.getElementById("" + newMeta.x + newMeta.y);
+            fresh.addEventListener("click", () => {
+              clearSelectionOfBoxes();
+              selectBoxes(newMeta.x, newMeta.y, newMeta.color);
+              removeSelectedBoxes();
+            });
+            resolve();
+          };
+        });
+        promises.push(promise);
       }
     }
-    counter = 0;
   }
+  // ✅ Only re-enable input after ALL boxes finish animating
+  Promise.all(promises).then(() => {
+    enableInput();
+  });
 }
-
 function disableInput() {
   for (let i = 0; i < row; i++) {
     for (let j = 0; j < col; j++) {
@@ -250,15 +262,15 @@ function infiniteMode() {
     let id = document.getElementById("" + i + "0");
     if (id == null) {
       let posX = startX + startGapX / 2 + i * boxWidth;
-      let posY = startY + startGapY / 2 + 0 * boxHeight;
-      color = colors[getRandomInt()];
+      let posY = startY + startGapY / 2 + 0*boxHeight;
+      let color = colors[getRandomInt()];
       let boxId = "" + i + 0;
       const newMeta = {
         x: i,
         y: 0,
         color: color,
       };
-      createBox(posX, posY, boxWidth, boxHeight, color, newMeta, boxId);
+      const box=createBox(posX, posY, boxWidth, boxHeight, color, newMeta, boxId);
       gravity();
     }
   }
@@ -266,7 +278,8 @@ function infiniteMode() {
 function title(){
   const board=document.createElement("div");
   board.style.position="absolute";
-  board.style.left=playableWidth/2+"px";
+  board.style.left=startX+startGapX/2+((row/2)*boxWidth)+"px";
+  board.style.transform = "translateX(-50%)";;
   board.style.top=0;
   board.style.fontSize="25px";
   board.id="board";
@@ -277,7 +290,7 @@ function title(){
 function scoreBoard(){
   const scoreboard=document.createElement("div");
   scoreboard.style.position="absolute";
-  scoreboard.style.left=playableWidth;
+  scoreboard.style.left=playableWidth+"px";
   scoreboard.textContent="Score";
-  document.body.appendChild(scoreBoard);
+  document.body.appendChild(scoreboard);
 }

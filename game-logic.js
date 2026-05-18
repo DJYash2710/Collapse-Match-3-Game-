@@ -132,8 +132,6 @@ function gravity() {
           y: j + counter,
           color: id.style.backgroundColor,
         };
-
-        // ✅ Rename ID immediately so no two boxes share an ID
         id.id = "" + newMeta.x + newMeta.y;
         id.style.top = toTop + "px";
 
@@ -164,8 +162,8 @@ function gravity() {
       }
     }
   }
-  // ✅ Only re-enable input after ALL boxes finish animating
-  Promise.all(promises).then(() => {
+  
+  Promise.all(promises).then(() => { //Only re-enable input after ALL boxes finish animating
     enableInput();
   });
 }
@@ -272,7 +270,7 @@ function infiniteMode() {
     let id = document.getElementById("" + i + "0");
     if (id == null) {
       let posX = startX + startGapX / 2 + i * boxWidth;
-      let posY = startY + startGapY / 2 + 0 * boxHeight;
+      let posY = startY + startGapY / 2 - boxHeight;
       let color = colors[getRandomInt()];
       let boxId = "" + i + 0;
       const newMeta = {
@@ -289,6 +287,19 @@ function infiniteMode() {
         newMeta,
         boxId,
       );
+      disableInput();
+      const animation = box.animate(
+        [
+          { top: box.style.top, opacity:0 },
+          { top: posY + boxHeight + "px", opacity:1 },
+        ],
+        {
+          duration: 300,
+          easing: "ease-in-out",
+          fill: "both",
+        },
+      );
+      box.style.top = posY + boxHeight + "px";
       gravity();
     }
   }
@@ -316,7 +327,7 @@ function standardModeScore() {
     let seconds = totalSeconds % 60;
     // Formatting with leading zeros
     let display = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-    board.textContent="Time -"+display;
+    board.textContent = "Time -" + display;
   }, 1000);
   document.body.appendChild(board);
 }

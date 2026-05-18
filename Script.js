@@ -1,3 +1,15 @@
+// const modal = document.getElementById("modeSelector");
+// document.addEventListener("DOMContentLoaded", () => {
+//   modal.showModal(); // Opens the dialog
+// });
+const standardModeBtn = document.getElementById("standard");
+const infiniteModeBtn = document.getElementById("infinite");
+standardModeBtn.addEventListener("click", () => {
+  modal.close();
+});
+infiniteModeBtn.addEventListener("click", () => {
+  modal.close();
+});
 let row = 10;
 let col = 10;
 let totalWidth = window.innerWidth;
@@ -13,9 +25,9 @@ let boxHeight = playableHeight / row;
 let startX = totalWidth * startXPercent;
 let startY = totalHeight * startYPercent;
 let center = row % 2 == 0 ? row / 2 : (row + 1) / 2;
-let meta = {}; //used to store the x and y coordinates and color of the box to be used in the click event listener
-let startGapX = 0; //used to calculate the gap left after creating and shaping the boxes to center them in the playable area
-let startGapY = 0; //used to calculate the gap left after creating and shaping the boxes to center them in the playable area
+let meta = {};
+let startGapX = 0;
+let startGapY = 0;
 if (boxWidth > boxHeight) {
   boxWidth = boxHeight;
   startGapX = playableWidth - boxWidth * row;
@@ -61,6 +73,7 @@ function createBox(x, y, width, height, color, meta, boxId) {
     removeSelectedBoxes();
   });
   document.body.appendChild(box);
+  return box;
 }
 function selectBoxes(x, y, color) {
   let boxId = "" + x + y;
@@ -71,7 +84,6 @@ function selectBoxes(x, y, color) {
     return;
   }
   set.add(boxId);
-
   const rightSide = x + 1;
   if (rightSide < col) {
     selectBoxes(rightSide, y, color);
@@ -90,11 +102,11 @@ function selectBoxes(x, y, color) {
   }
 }
 
-let set = new Set(); //used to store the ids of the boxes that are to be removed on click of a box to avoid duplicate entries and to easily remove them using forEach loop
+let set = new Set();
 function clearSelectionOfBoxes() {
   set.clear();
 }
-let counter = 0; // counter to keep track of how many boxes are removed in a column to calculate the distance the boxes above should fall down
+let counter = 0;
 function gravity() {
   for (let i = 0; i < row; i++) {
     for (let j = col - 1; j >= 0; j--) {
@@ -115,10 +127,6 @@ function gravity() {
           },
         );
         id.style.top = parseInt(id.style.top) + counter * boxHeight + "px";
-        animation.onfinish = () => {
-          animation.cancel();
-          enableInput();
-        };
         id.id = "" + i + (j + counter);
         // id.textContent = "" + i + (j + counter);
         const newmeta = {
@@ -126,11 +134,18 @@ function gravity() {
           y: j + counter,
           color: id.style.backgroundColor,
         };
-        id.addEventListener("click", () => {
-          clearSelectionOfBoxes();
-          selectBoxes(newmeta.x, newmeta.y, newmeta.color);
-          removeSelectedBoxes();
-        });
+        const capturedId = id; // ✅ capture before loop moves on
+        animation.onfinish = () => {
+          animation.cancel();
+          capturedId.replaceWith(capturedId.cloneNode(true)); // ✅ strip old listeners after animation
+          let fresh = document.getElementById("" + newmeta.x + newmeta.y);
+          fresh.addEventListener("click", () => {
+            clearSelectionOfBoxes();
+            selectBoxes(newmeta.x, newmeta.y, newmeta.color);
+            removeSelectedBoxes();
+          });
+          enableInput();
+        };
       }
     }
     counter = 0;
@@ -172,8 +187,7 @@ function centerAlign() {
   if (colsLeft.length == col) return;
 
   let gridLeft = startX + startGapX / 2;
-  let newStartLeft =
-    gridLeft + (col * boxWidth - colsLeft.length * boxWidth) / 2;
+  let newStartLeft = gridLeft + (col * boxWidth - colsLeft.length * boxWidth) / 2;
 
   for (let k = 0; k < colsLeft.length; k++) {
     let oldCol = colsLeft[k];
@@ -190,23 +204,26 @@ function centerAlign() {
         { duration: 300, easing: "ease-in-out", fill: "both" },
       );
       id.style.left = newLeft + "px";
-      animation.onfinish = () => {
-        animation.cancel();
-        enableInput();
-      };
-
       id.id = "" + newCol + j;
       // id.textContent = "" + newCol + j;
 
       const newmeta = { x: newCol, y: j, color: id.style.backgroundColor };
-      id.addEventListener("click", () => {
-        clearSelectionOfBoxes();
-        selectBoxes(newmeta.x, newmeta.y, newmeta.color);
-        removeSelectedBoxes();
-      });
+      const capturedId = id; // ✅ capture before loop moves on
+      animation.onfinish = () => {
+        animation.cancel();
+        capturedId.replaceWith(capturedId.cloneNode(true)); // ✅ strip old listeners after animation
+        let fresh = document.getElementById("" + newmeta.x + newmeta.y);
+        fresh.addEventListener("click", () => {
+          clearSelectionOfBoxes();
+          selectBoxes(newmeta.x, newmeta.y, newmeta.color);
+          removeSelectedBoxes();
+        });
+        enableInput();
+      };
     }
   }
 }
+
 function removeSelectedBoxes() {
   if (set.size > 1) {
     set.forEach((boxId) => {
@@ -217,8 +234,9 @@ function removeSelectedBoxes() {
     brickBlastSound();
   }
 }
-const sound=new Audio("assets/audio/brick_break.mp3");
+const sound = new Audio("assets/audio/brick_break.mp3");
 function brickBlastSound() {
-  sound.currentTime = 0; 
+  sound.currentTime = 0;
   sound.play();
 }
+function infiniteMode() {}

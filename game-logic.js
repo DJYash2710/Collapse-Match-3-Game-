@@ -1,19 +1,20 @@
 const modal = document.getElementById("modeSelector");
 document.addEventListener("DOMContentLoaded", () => {
-  modal.showModal(); // Opens the dialog
+  modal.showModal(); // Opens modal
 });
 const standardModeBtn = document.getElementById("standard");
 const infiniteModeBtn = document.getElementById("infinite");
 standardModeBtn.addEventListener("click", () => {
-  modal.close();
+  modal.close(); //close modal
+  standardModeScore();
 });
 infiniteModeBtn.addEventListener("click", () => {
-  modal.close();
+  modal.close(); //close modal
+  infiniteModeScore();
   setInterval(() => {
     infiniteMode();
   }, 300);
-}
-);
+});
 let row = 10;
 let col = 10;
 let totalWidth = window.innerWidth;
@@ -32,6 +33,8 @@ let center = row % 2 == 0 ? row / 2 : (row + 1) / 2;
 let meta = {};
 let startGapX = 0;
 let startGapY = 0;
+let set = new Set();
+let mainScore = 0;
 if (boxWidth > boxHeight) {
   boxWidth = boxHeight;
   startGapX = playableWidth - boxWidth * row;
@@ -40,7 +43,6 @@ if (boxWidth > boxHeight) {
   startGapY = playableHeight - boxHeight * col;
 }
 createBox(startX, startY, playableWidth, playableHeight, "#000000", meta);
-title();
 function getRandomInt() {
   let min = 0;
   let max = 3;
@@ -75,6 +77,7 @@ function createBox(x, y, width, height, color, meta, boxId) {
   box.addEventListener("click", () => {
     clearSelectionOfBoxes();
     selectBoxes(meta.x, meta.y, meta.color);
+    updateScore(meta.color);
     removeSelectedBoxes();
   });
   document.body.appendChild(box);
@@ -106,8 +109,6 @@ function selectBoxes(x, y, color) {
     selectBoxes(x, topSide, color);
   }
 }
-
-let set = new Set();
 function clearSelectionOfBoxes() {
   set.clear();
 }
@@ -116,7 +117,7 @@ function gravity() {
   let promises = [];
 
   for (let i = 0; i < col; i++) {
-    let counter = 0; 
+    let counter = 0;
     for (let j = row - 1; j >= 0; j--) {
       let id = document.getElementById("" + i + j);
       if (id == null) {
@@ -141,11 +142,8 @@ function gravity() {
         const capturedId = id;
         const promise = new Promise((resolve) => {
           const animation = capturedId.animate(
-            [
-              { top: fromTop + "px" },
-              { top: toTop + "px" },
-            ],
-            { duration: 300, easing: "ease-in", fill: "both" }
+            [{ top: fromTop + "px" }, { top: toTop + "px" }],
+            { duration: 300, easing: "ease-in", fill: "both" },
           );
 
           animation.onfinish = () => {
@@ -155,6 +153,8 @@ function gravity() {
             fresh.addEventListener("click", () => {
               clearSelectionOfBoxes();
               selectBoxes(newMeta.x, newMeta.y, newMeta.color);
+              updateScore(newMeta.color);
+
               removeSelectedBoxes();
             });
             resolve();
@@ -225,15 +225,16 @@ function centerAlign() {
       id.id = "" + newCol + j;
       // id.textContent = "" + newCol + j;
 
-      const newmeta = { x: newCol, y: j, color: id.style.backgroundColor };
+      const newMeta = { x: newCol, y: j, color: id.style.backgroundColor };
       const capturedId = id;
       animation.onfinish = () => {
         animation.cancel();
         capturedId.replaceWith(capturedId.cloneNode(true));
-        let fresh = document.getElementById("" + newmeta.x + newmeta.y);
+        let fresh = document.getElementById("" + newMeta.x + newMeta.y);
         fresh.addEventListener("click", () => {
           clearSelectionOfBoxes();
-          selectBoxes(newmeta.x, newmeta.y, newmeta.color);
+          selectBoxes(newMeta.x, newMeta.y, newMeta.color);
+          updateScore(newMeta.color);
           removeSelectedBoxes();
         });
         enableInput();
@@ -241,9 +242,18 @@ function centerAlign() {
     }
   }
 }
-
+function updateScore(color) {
+  const colorValues = {
+    blue: 5,
+    red: 10,
+    yellow: 15,
+    green: 20,
+  };
+  if (set.size > 2) mainScore += set.size * colorValues[color];
+  console.log(mainScore);
+}
 function removeSelectedBoxes() {
-  if (set.size > 1) {
+  if (set.size > 2) {
     set.forEach((boxId) => {
       document.getElementById(boxId)?.remove();
     });
@@ -262,7 +272,7 @@ function infiniteMode() {
     let id = document.getElementById("" + i + "0");
     if (id == null) {
       let posX = startX + startGapX / 2 + i * boxWidth;
-      let posY = startY + startGapY / 2 + 0*boxHeight;
+      let posY = startY + startGapY / 2 + 0 * boxHeight;
       let color = colors[getRandomInt()];
       let boxId = "" + i + 0;
       const newMeta = {
@@ -270,27 +280,43 @@ function infiniteMode() {
         y: 0,
         color: color,
       };
-      const box=createBox(posX, posY, boxWidth, boxHeight, color, newMeta, boxId);
+      const box = createBox(
+        posX,
+        posY,
+        boxWidth,
+        boxHeight,
+        color,
+        newMeta,
+        boxId,
+      );
       gravity();
     }
   }
 }
-function title(){
-  const board=document.createElement("div");
-  board.style.position="absolute";
-  board.style.left=startX+startGapX/2+((row/2)*boxWidth)+"px";
-  board.style.transform = "translateX(-50%)";;
-  board.style.top=0;
-  board.style.fontSize="25px";
-  board.id="board";
-  board.style.fontWeight="bold"
-  board.textContent="Color Blast";
+const board = document.createElement("div");
+board.style.position = "absolute";
+board.style.left = playableWidth + "px";
+board.style.transform = "translateX(+50%)";
+board.style.top = startY + "px";
+board.style.fontSize = "25px";
+board.id = "board";
+board.style.fontWeight = "bold";
+function infiniteModeScore() {
+  setInterval(() => {
+    board.textContent = "Score-" + mainScore;
+  }, 300);
   document.body.appendChild(board);
 }
-function scoreBoard(){
-  const scoreboard=document.createElement("div");
-  scoreboard.style.position="absolute";
-  scoreboard.style.left=playableWidth+"px";
-  scoreboard.textContent="Score";
-  document.body.appendChild(scoreboard);
+function standardModeScore() {
+  let startTime = Date.now();
+  setInterval(() => {
+    let elapsedTime = Date.now() - startTime;
+    let totalSeconds = Math.floor(elapsedTime / 1000);
+    let minutes = Math.floor(totalSeconds / 60);
+    let seconds = totalSeconds % 60;
+    // Formatting with leading zeros
+    let display = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    board.textContent="Time -"+display;
+  }, 1000);
+  document.body.appendChild(board);
 }

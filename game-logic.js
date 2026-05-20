@@ -7,6 +7,7 @@ const infiniteModeBtn = document.getElementById("infinite");
 standardModeBtn.addEventListener("click", () => {
   modal.close(); //close modal
   standardModeScore();
+  standardModeRule();
 });
 infiniteModeBtn.addEventListener("click", () => {
   modal.close(); //close modal
@@ -45,10 +46,10 @@ if (boxWidth > boxHeight) {
 createBox(startX, startY, playableWidth, playableHeight, "#000000", meta);
 function getRandomInt() {
   let min = 0;
-  let max = 3;
+  let max = 5;
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
-const colors = ["red", "yellow", "blue", "green"];
+const colors = ["red", "yellow", "blue", "green","orange","purple"];
 for (let i = 0; i < row; i++) {
   for (let j = 0; j < col; j++) {
     let posX = startX + startGapX / 2 + j * boxWidth;
@@ -115,7 +116,6 @@ function clearSelectionOfBoxes() {
 let counter = 0;
 function gravity() {
   let promises = [];
-
   for (let i = 0; i < col; i++) {
     let counter = 0;
     for (let j = row - 1; j >= 0; j--) {
@@ -124,7 +124,6 @@ function gravity() {
         counter++;
       } else {
         if (counter === 0) continue;
-
         const fromTop = parseInt(id.style.top);
         const toTop = fromTop + counter * boxHeight;
         const newMeta = {
@@ -134,16 +133,13 @@ function gravity() {
         };
         id.id = "" + newMeta.x + newMeta.y;
         id.style.top = toTop + "px";
-
         disableInput();
-
         const capturedId = id;
         const promise = new Promise((resolve) => {
           const animation = capturedId.animate(
             [{ top: fromTop + "px" }, { top: toTop + "px" }],
             { duration: 300, easing: "ease-in", fill: "both" },
           );
-
           animation.onfinish = () => {
             animation.cancel();
             capturedId.replaceWith(capturedId.cloneNode(true));
@@ -152,7 +148,6 @@ function gravity() {
               clearSelectionOfBoxes();
               selectBoxes(newMeta.x, newMeta.y, newMeta.color);
               updateScore(newMeta.color);
-
               removeSelectedBoxes();
             });
             resolve();
@@ -162,8 +157,8 @@ function gravity() {
       }
     }
   }
-  
-  Promise.all(promises).then(() => { //Only re-enable input after ALL boxes finish animating
+  Promise.all(promises).then(() => {
+    //Only re-enable input after ALL boxes finish animating
     enableInput();
   });
 }
@@ -187,7 +182,6 @@ function enableInput() {
     }
   }
 }
-
 function centerAlign() {
   let colsLeft = [];
   for (let i = 0; i < col; i++) {
@@ -200,20 +194,16 @@ function centerAlign() {
   }
   if (colsLeft.length == 0) return;
   if (colsLeft.length == col) return;
-
   let gridLeft = startX + startGapX / 2;
   let newStartLeft =
     gridLeft + (col * boxWidth - colsLeft.length * boxWidth) / 2;
-
   for (let k = 0; k < colsLeft.length; k++) {
     let oldCol = colsLeft[k];
     let newCol = k;
     let newLeft = newStartLeft + k * boxWidth;
-
     for (let j = 0; j < row; j++) {
       let id = document.getElementById("" + oldCol + j);
       if (id == null) continue;
-
       disableInput();
       const animation = id.animate(
         [{ left: id.style.left }, { left: newLeft + "px" }],
@@ -222,7 +212,6 @@ function centerAlign() {
       id.style.left = newLeft + "px";
       id.id = "" + newCol + j;
       // id.textContent = "" + newCol + j;
-
       const newMeta = { x: newCol, y: j, color: id.style.backgroundColor };
       const capturedId = id;
       animation.onfinish = () => {
@@ -246,9 +235,10 @@ function updateScore(color) {
     red: 10,
     yellow: 15,
     green: 20,
+    orange: 25,
+    purple: 30,
   };
   if (set.size > 2) mainScore += set.size * colorValues[color];
-  console.log(mainScore);
 }
 function removeSelectedBoxes() {
   if (set.size > 2) {
@@ -290,8 +280,8 @@ function infiniteMode() {
       disableInput();
       const animation = box.animate(
         [
-          { top: box.style.top, opacity:0 },
-          { top: posY + boxHeight + "px", opacity:1 },
+          { top: box.style.top, opacity: 0 },
+          { top: posY + boxHeight + "px", opacity: 1 },
         ],
         {
           duration: 300,
@@ -330,4 +320,7 @@ function standardModeScore() {
     board.textContent = "Time -" + display;
   }, 1000);
   document.body.appendChild(board);
+}
+function standardModeRule(){
+  
 }
